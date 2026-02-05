@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Politique de confidentialité - SmartPark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .page-content {
+      min-height: 100vh;
+      background: var(--parking-light);
+      padding-top: 6rem;
+      padding-bottom: 3rem;
+    }
+
+    .legal-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+    }
+
+    .legal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--parking-gray);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .legal-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .legal-section h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--parking-gray);
+      margin-bottom: 0.75rem;
+    }
+
+    .legal-section p {
+      color: var(--gray-600);
+      line-height: 1.7;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem 1rem;
+      color: var(--gray-600);
+      background: white;
+      border-radius: var(--radius);
+      transition: all var(--transition);
+    }
+
+    .back-btn:hover {
+      background: var(--gray-100);
+      color: var(--gray-800);
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">
+          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
+        </div>
+        <span class="logo-text">SmartPark</span>
+      </a>
+
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Accueil</a>
+        <a href="login.html" class="nav-link">Connexion</a>
+        <a href="register.html" class="btn btn-primary btn-sm">S'inscrire</a>
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="index.html">Accueil</a>
+      <a href="login.html">Connexion</a>
+      <a href="register.html" style="color: var(--parking-green); font-weight: 500;">S'inscrire</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="page-content">
+    <div class="container" style="max-width: 48rem;">
+      <a href="index.html" class="back-btn animate-fade-in">
+        <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+        Retour
+      </a>
+
+      <div class="legal-card animate-fade-in-up">
+        <h1 class="legal-title">
+          <i data-lucide="shield" class="text-green-600" style="width: 28px; height: 28px;"></i>
+          Politique de confidentialité
+        </h1>
+
+        <div class="legal-section">
+          <h3>1. Collecte des données</h3>
+          <p>
+            Nous collectons les informations suivantes : nom, email, numéro de téléphone,
+            informations de véhicule (matricule, marque, couleur) et historique de stationnement.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>2. Utilisation des données</h3>
+          <p>
+            Vos données sont utilisées pour : gérer votre compte, traiter vos réservations,
+            émettre des reçus et améliorer nos services.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>3. Protection des données</h3>
+          <p>
+            Nous mettons en œuvre des mesures de sécurité appropriées pour protéger
+            vos informations personnelles contre tout accès non autorisé.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>4. Vos droits (RGPD)</h3>
+          <p>
+            Conformément au RGPD, vous disposez d'un droit d'accès, de rectification,
+            de suppression et de portabilité de vos données personnelles.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>5. Cookies</h3>
+          <p>
+            Nous utilisons des cookies essentiels pour le fonctionnement du service
+            et des cookies analytiques pour améliorer l'expérience utilisateur.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>6. Partage des données</h3>
+          <p>
+            Vos données ne sont pas vendues à des tiers. Elles peuvent être partagées
+            avec nos prestataires de services uniquement dans le cadre de l'exécution du service.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3>7. Contact</h3>
+          <p>
+            Pour toute question concernant vos données personnelles, contactez-nous
+            à l'adresse : privacy@smartpark.com
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div class="logo">
+        <div class="logo-icon" style="width: 2rem; height: 2rem;">
+          <i data-lucide="car" style="width: 16px; height: 16px;"></i>
+        </div>
+        <span class="logo-text" style="font-size: 1.125rem;">SmartPark</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="terms.html" class="footer-link">Conditions d'utilisation</a>
+        <a href="privacy.html" class="footer-link">Politique de confidentialité</a>
+      </div>
+
+      <p class="footer-copy">© 2024 SmartPark. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="/static/js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscription - SmartPark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .auth-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, var(--parking-light) 0%, var(--gray-300) 50%, var(--parking-light) 100%);
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .auth-header {
+      text-align: center;
+      padding: 2rem 2rem 1rem;
+    }
+
+    .auth-icon {
+      width: 4rem;
+      height: 4rem;
+      margin: 0 auto 1rem;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--parking-green) 0%, var(--green-500) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--parking-gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-subtitle {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    .auth-body {
+      padding: 1rem 2rem 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      font-size: 1rem;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      background: white;
+      transition: all var(--transition);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--parking-green);
+      box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+    }
+
+    .form-input.error {
+      border-color: var(--parking-red);
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+    }
+
+    .input-toggle {
+      position: absolute;
+      right: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0.25rem;
+    }
+
+    .input-toggle:hover {
+      color: var(--gray-600);
+    }
+
+    .field-error {
+      display: none;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 0.375rem;
+      font-size: 0.75rem;
+      color: var(--parking-red);
+    }
+
+    .field-error.show {
+      display: flex;
+    }
+
+    .password-strength {
+      margin-top: 0.5rem;
+    }
+
+    .strength-bar {
+      height: 0.25rem;
+      background: var(--gray-200);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0;
+      border-radius: 9999px;
+      transition: all var(--transition);
+    }
+
+    .strength-text {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 0.25rem;
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper input[type="checkbox"] {
+      width: 1.125rem;
+      height: 1.125rem;
+      margin-top: 0.125rem;
+      accent-color: var(--parking-green);
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper label {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+
+    .checkbox-wrapper a {
+      color: var(--parking-blue);
+    }
+
+    .checkbox-wrapper a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-footer {
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .auth-text {
+      font-size: 0.875rem;
+      color: var(--gray-600);
+    }
+
+    .auth-text a {
+      color: var(--parking-green);
+      font-weight: 500;
+    }
+
+    .auth-text a:hover {
+      text-decoration: underline;
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card animate-scale-in">
+      <div class="auth-header">
+        <div class="auth-icon">
+          <i data-lucide="user" style="width: 32px; height: 32px; color: white;"></i>
+        </div>
+        <h1 class="auth-title">Créer un compte</h1>
+        <p class="auth-subtitle">Rejoignez SmartPark dès maintenant</p>
+      </div>
+
+      <div class="auth-body">
+        <form id="registerForm">
+          <div class="form-group">
+            <label class="form-label" for="name">Nom complet</label>
+            <div class="input-wrapper">
+              <i data-lucide="user" class="input-icon" style="width: 18px; height: 18px;"></i>
+              <input
+                type="text"
+                id="name"
+                class="form-input"
+                placeholder="Votre nom"
+                required
+              >
+            </div>
+            <div class="field-error" id="nameError">
+              <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+              <span>Nom requis</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <div class="input-wrapper">
+              <i data-lucide="mail" class="input-icon" style="width: 18px; height: 18px;"></i>
+              <input
+                type="email"
+                id="email"
+                class="form-input"
+                placeholder="votre@email.com"
+                required
+              >
+            </div>
+            <div class="field-error" id="emailError">
+              <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+              <span>Email invalide</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Téléphone</label>
+            <div class="input-wrapper">
+              <i data-lucide="phone" class="input-icon" style="width: 18px; height: 18px;"></i>
+              <input
+                type="tel"
+                id="phone"
+                class="form-input"
+                placeholder="+212 612 34 56 78"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Mot de passe</label>
+            <div class="input-wrapper">
+              <i data-lucide="lock" class="input-icon" style="width: 18px; height: 18px;"></i>
+              <input
+                type="password"
+                id="password"
+                class="form-input"
+                placeholder="••••••••"
+                style="padding-right: 2.75rem;"
+                required
+              >
+              <button type="button" class="input-toggle" id="togglePassword">
+                <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
+              </button>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bar">
+                <div class="strength-fill" id="passwordStrength"></div>
+              </div>
+              <p class="strength-text" id="passwordStrengthText"></p>
+            </div>
+            <div class="field-error" id="passwordError">
+              <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+              <span>Minimum 8 caractères</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="role">Rôle</label>
+            <div class="input-wrapper">
+              <select id="role" class="form-select" style="padding-left: 2.75rem;">
+                <option value="client">👤 Client</option>
+                <option value="gardien">🛡️ Gardien</option>
+                <option value="admin">⚙️ Admin</option>
+              </select>
+              <i data-lucide="user" class="input-icon" style="width: 18px; height: 18px;"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="acceptTerms" required>
+              <label for="acceptTerms">
+                J'accepte les <a href="/terms" target="_blank">conditions d'utilisation</a>
+              </label>
+            </div>
+            <div class="field-error" id="acceptTermsError">
+              <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+              <span>Vous devez accepter les conditions</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-full" style="margin-top: 0.5rem;">
+            Créer mon compte
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p class="auth-text">
+            Déjà un compte ?
+            <a href="/">Se connecter</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/script.js"></script>
+  <script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('password');
+      const icon = this.querySelector('i');
+
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passwordInput.type = 'password';
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

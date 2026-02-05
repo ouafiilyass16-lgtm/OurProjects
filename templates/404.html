@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page non trouvée - SmartPark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .error-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, var(--parking-light) 0%, var(--gray-300) 50%, var(--parking-light) 100%);
+    }
+
+    .error-content {
+      text-align: center;
+    }
+
+    .error-icon {
+      width: 8rem;
+      height: 8rem;
+      margin: 0 auto 2rem;
+      border-radius: 1.5rem;
+      background: linear-gradient(135deg, var(--parking-gray) 0%, var(--gray-700) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-code {
+      font-size: 5rem;
+      font-weight: 700;
+      color: var(--parking-gray);
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .error-message {
+      font-size: 1.25rem;
+      color: var(--gray-600);
+      margin-bottom: 2rem;
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <div class="error-page">
+    <div class="error-content animate-scale-in">
+      <div class="error-icon">
+        <i data-lucide="alert-circle" style="width: 64px; height: 64px; color: white;"></i>
+      </div>
+      <h1 class="error-code">404</h1>
+      <p class="error-message">Page non trouvée</p>
+      <a href="index.html" class="btn btn-primary btn-lg">
+        Retour à l'accueil
+      </a>
+    </div>
+  </div>
+
+  <script src="/static/js/script.js"></script>
+</body>
+</html>
