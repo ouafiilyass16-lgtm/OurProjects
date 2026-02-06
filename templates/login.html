@@ -181,7 +181,7 @@
       </div>
 
       <div class="auth-body">
-        <form id="loginForm">
+        <form id="loginForm" action="/login" method="POST">
           <div class="form-group">
             <label class="form-label" for="email">Email</label>
             <div class="input-wrapper">
@@ -189,6 +189,7 @@
               <input
                 type="email"
                 id="email"
+                name="email"
                 class="form-input"
                 placeholder="votre@email.com"
                 required
@@ -207,6 +208,7 @@
               <input
                 type="password"
                 id="password"
+                name="password"
                 class="form-input"
                 placeholder="••••••••"
                 required
@@ -221,7 +223,7 @@
           <div class="form-group">
             <label class="form-label" for="role">Rôle</label>
             <div class="input-wrapper">
-              <select id="role" class="form-select" style="padding-left: 2.75rem;">
+              <select id="role" name="role" class="form-select" style="padding-left: 2.75rem;">
                 <option value="client">
                   👤 Client
                 </option>

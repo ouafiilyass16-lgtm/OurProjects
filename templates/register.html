@@ -220,7 +220,7 @@
       </div>
 
       <div class="auth-body">
-        <form id="registerForm">
+        <form id="registerForm" action="/register" method="POST">
           <div class="form-group">
             <label class="form-label" for="name">Nom complet</label>
             <div class="input-wrapper">
@@ -228,6 +228,7 @@
               <input
                 type="text"
                 id="name"
+                name="name"
                 class="form-input"
                 placeholder="Votre nom"
                 required
@@ -246,6 +247,7 @@
               <input
                 type="email"
                 id="email"
+                name="email"
                 class="form-input"
                 placeholder="votre@email.com"
                 required
@@ -277,6 +279,7 @@
               <input
                 type="password"
                 id="password"
+                name="password"
                 class="form-input"
                 placeholder="••••••••"
                 style="padding-right: 2.75rem;"
@@ -301,7 +304,7 @@
           <div class="form-group">
             <label class="form-label" for="role">Rôle</label>
             <div class="input-wrapper">
-              <select id="role" class="form-select" style="padding-left: 2.75rem;">
+              <select id="role" name="role" class="form-select" style="padding-left: 2.75rem;">
                 <option value="client">👤 Client</option>
                 <option value="gardien">🛡️ Gardien</option>
                 <option value="admin">⚙️ Admin</option>

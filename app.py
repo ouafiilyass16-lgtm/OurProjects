@@ -11,20 +11,27 @@ from Paiement import Paiement
 from datetime import datetime
 import calendar
 
+
 app = Flask(__name__)
 app.secret_key = "secret"
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 init_db()
 
+# ---------------- Landing Page ----------------
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 # ---------------- Login ----------------
-@app.route("/", methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         user = Utilisateur.verifier_connexion(request.form["email"], request.form["password"])
         if user:
             print("Utilisateur trouvé:", user)
             session["user_id"] = user[0]
-            session["role"] = user[4].lower()
+            role_lower = user[4].lower()
+            session["role"] = role_lower
 
             if role_lower == "admin":
                 return redirect("/admin")
@@ -39,13 +46,16 @@ def login():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        nom = request.form["nom"]
+        nom = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
-        user = Utilisateur(nom, email, password)
+        role = request.form.get("role")
+        if role not in ["client"]:
+            role = "client"
+        user = Utilisateur(nom, email, password, role)
         try:
             user.enregistrer()
-            return redirect("/")
+            return redirect("/login")
         except:
             return "❌ Email déjà utilisé"
     return render_template("register.html")
@@ -181,7 +191,7 @@ def choisir_place():
 
 @app.route("/sortir", methods=["GET", "POST"])
 def sortie_voiture():
-    if session.get("role") not in ["Admin", "Gardien", "Client"]:
+    if session.get("role") not in ["admin", "gardien", "client"]:
         return redirect("/")
 
     with sqlite3.connect(DB_PATH) as db:  # connexion sécurisée
@@ -274,4 +284,4 @@ def logout():
     return redirect("/")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    app.run(port = 3000)

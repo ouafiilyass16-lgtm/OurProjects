@@ -200,16 +200,16 @@ function clearFieldError(fieldId) {
 function redirectToDashboard(role) {
   switch(role) {
     case 'client':
-      window.location.href = '/client';
+      window.location.href = 'dashboard-client.html';
       break;
     case 'gardien':
-      window.location.href = '/gardien';
+      window.location.href = 'dashboard-gardien.html';
       break;
     case 'admin':
-      window.location.href = '/admin';
+      window.location.href = 'dashboard-admin.html';
       break;
     default:
-      window.location.href = '/';
+      window.location.href = 'index.html';
   }
 }
 
