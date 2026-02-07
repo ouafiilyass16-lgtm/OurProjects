@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 from datetime import datetime
 from database import init_db, DB_PATH
 from GestionParking import GestionParking
@@ -8,71 +8,83 @@ from Place import Place
 from Vehicule import Vehicule
 from Ticket import Ticket
 from Paiement import Paiement
-from datetime import datetime
 import calendar
-
 
 app = Flask(__name__)
 app.secret_key = "secret"
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 init_db()
 
+
 # ---------------- Landing Page ----------------
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 # ---------------- Login ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        user = Utilisateur.verifier_connexion(request.form["email"], request.form["password"])
+        email = request.form.get("email")
+        password = request.form.get("password")
+        user = Utilisateur.verifier_connexion(email, password)
+
         if user:
             print("Utilisateur trouvé:", user)
             session["user_id"] = user[0]
+            # Normaliser le rôle en minuscules pour la cohérence
             role_lower = user[4].lower()
             session["role"] = role_lower
 
             if role_lower == "admin":
-                return redirect("/admin")
+                return redirect(url_for("admin_dashboard"))
             elif role_lower == "gardien":
-                return redirect("/gardien")
+                return redirect(url_for("gardien_dashboard"))
             else:
-                return redirect("/client")
+                return redirect(url_for("client_dashboard"))
+
         return "❌ Email ou mot de passe incorrect"
     return render_template("login.html")
+
 
 # ---------------- Inscription ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        nom = request.form["name"]
-        email = request.form["email"]
-        password = request.form["password"]
-        role = request.form.get("role")
-        if role not in ["client"]:
+        nom = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        role = request.form.get("role", "client")
+
+        # Validation basique du rôle
+        if role.lower() not in ["client", "gardien", "admin"]:
             role = "client"
+
         user = Utilisateur(nom, email, password, role)
         try:
             user.enregistrer()
-            return redirect("/login")
-        except:
-            return "❌ Email déjà utilisé"
+            return redirect(url_for("login"))
+        except Exception as e:
+            print(f"Erreur d'inscription: {e}")
+            return "❌ Email déjà utilisé ou erreur lors de l'inscription"
     return render_template("register.html")
+
 
 # ---------------- Client Dashboard ----------------
 @app.route("/client")
 def client_dashboard():
     if session.get("role") != "client":
-        return redirect("/")
+        return redirect(url_for("login"))
     places = Place.places_libres()
     return render_template("dashboard_client.html", places=places)
+
 
 # ---------------- Gardien Dashboard ----------------
 @app.route("/gardien", methods=["GET", "POST"])
 def gardien_dashboard():
     if session.get("role") != "gardien":
-        return redirect("/")
+        return redirect(url_for("login"))
 
     # Récupérer tous les tickets en cours
     with sqlite3.connect(DB_PATH) as db:
@@ -93,24 +105,28 @@ def gardien_dashboard():
 @app.route("/valider_ticket", methods=["POST"])
 def valider_ticket():
     if session.get("role") != "gardien":
-        return redirect("/")
+        return redirect(url_for("login"))
 
-    ticket_id = request.form["ticket_id"]
+    ticket_id = request.form.get("ticket_id")
 
     with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
-        # Autoriser la sortie
-        cr.execute("UPDATE tickets SET autorise=1 WHERE id=?", (ticket_id,))
-        db.commit()
+        # Autoriser la sortie (si le champ existe, sinon cette ligne pourrait échouer)
+        try:
+            cr.execute("UPDATE tickets SET autorise=1 WHERE id=?", (ticket_id,))
+            db.commit()
+        except sqlite3.OperationalError:
+            # Si la colonne 'autorise' n'existe pas, on ignore ou on gère autrement
+            pass
 
-    return redirect("/gardien")
+    return redirect(url_for("gardien_dashboard"))
 
 
 # ---------------- Admin Dashboard ----------------
 @app.route("/admin")
 def admin_dashboard():
-    if "user_id" not in session or session.get("role") != "admin":
-        return redirect("/")
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
 
     # Statistiques globales
     nb_users, nb_vehicules, chiffre_total = GestionParking.get_stats_admin()
@@ -122,10 +138,10 @@ def admin_dashboard():
     chiffre_mensuel = GestionParking.get_chiffre_mensuel()
 
     # Liste des utilisateurs (clients)
-    utilisateurs = GestionParking.get_users()  # liste de dicts avec id, nom, email
+    utilisateurs = GestionParking.get_users()
 
     # Liste des véhicules
-    vehicules = GestionParking.get_vehicules()  # liste de dicts avec id, matricule, marque, couleur, user
+    vehicules = GestionParking.get_vehicules()
 
     return render_template(
         "dashboard_admin.html",
@@ -139,19 +155,18 @@ def admin_dashboard():
     )
 
 
-
 @app.route("/choisir_place", methods=["POST"])
 def choisir_place():
     if session.get("role") != "client":
-        return redirect("/")
+        return redirect(url_for("login"))
 
     user_id = session["user_id"]
-    place_id = request.form["place_id"]
-    matricule = request.form["matricule"]
-    marque = request.form["marque"]
-    couleur = request.form["couleur"]
+    place_id = request.form.get("place_id")
+    matricule = request.form.get("matricule")
+    marque = request.form.get("marque")
+    couleur = request.form.get("couleur")
 
-    with sqlite3.connect("instance/parking.db") as db:
+    with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
 
         # Vérifier si le client a déjà un véhicule en cours
@@ -169,9 +184,7 @@ def choisir_place():
             "INSERT INTO vehicules (matricule, marque, couleur, user_id) VALUES (?,?,?,?)",
             (matricule, marque, couleur, user_id)
         )
-        # Récupérer l'id du véhicule ajouté
-        cr.execute("SELECT id FROM vehicules WHERE matricule=?", (matricule,))
-        vehicule_id = cr.fetchone()[0]
+        vehicule_id = cr.lastrowid
 
         # Créer ticket
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -186,19 +199,19 @@ def choisir_place():
 
         db.commit()
 
-    return redirect("/client")
+    return redirect(url_for("client_dashboard"))
 
 
 @app.route("/sortir", methods=["GET", "POST"])
 def sortie_voiture():
-    if session.get("role") not in ["admin", "gardien", "client"]:
-        return redirect("/")
+    if not session.get("role"):
+        return redirect(url_for("login"))
 
-    with sqlite3.connect(DB_PATH) as db:  # connexion sécurisée
+    with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
 
         if request.method == "POST":
-            ticket_id = request.form["ticket_id"]
+            ticket_id = request.form.get("ticket_id")
 
             # Récupérer le ticket
             cr.execute("SELECT date_entree, place_id, user_id, vehicule_id FROM tickets WHERE id=?", (ticket_id,))
@@ -209,13 +222,14 @@ def sortie_voiture():
             date_entree_str, place_id, user_id, vehicule_id = ticket_info
             date_entree = datetime.strptime(date_entree_str, "%Y-%m-%d %H:%M:%S")
             now = datetime.now()
-            duree_heures = (now - date_entree).total_seconds() / 3600  # durée en heures
+            duree_heures = (now - date_entree).total_seconds() / 3600
 
             # Récupérer le tarif
             cr.execute("SELECT prix_par_heure FROM tarifs LIMIT 1")
-            tarif = cr.fetchone()[0]
+            tarif_row = cr.fetchone()
+            tarif = tarif_row[0] if tarif_row else 10
 
-            montant = round(duree_heures * tarif, 2)
+            montant = round(max(1, duree_heures) * tarif, 2)
 
             # Mettre à jour ticket + libérer place + ajouter paiement
             cr.execute(
@@ -229,7 +243,7 @@ def sortie_voiture():
             )
             db.commit()
 
-            # Préparer les infos pour le reçu **avant de fermer la base**
+            # Préparer les infos pour le reçu
             cr.execute("SELECT nom FROM utilisateurs WHERE id=?", (user_id,))
             nom_client = cr.fetchone()[0]
 
@@ -250,11 +264,11 @@ def sortie_voiture():
             return render_template("recu.html", ticket=ticket)
 
         # GET → afficher les tickets en cours
-        # GET → afficher les tickets en cours
-        if session.get("role") == "Client":
+        role = session.get("role").lower()
+        if role == "client":
             user_id = session["user_id"]
             cr.execute("""
-                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree, t.autorise
+                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree
                 FROM tickets t
                 JOIN utilisateurs u ON t.user_id=u.id
                 JOIN vehicules v ON t.vehicule_id=v.id
@@ -262,9 +276,8 @@ def sortie_voiture():
                 WHERE t.date_sortie IS NULL AND t.user_id=?
             """, (user_id,))
         else:
-            # Pour Admin ou Gardien
             cr.execute("""
-                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree, t.autorise
+                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree
                 FROM tickets t
                 JOIN utilisateurs u ON t.user_id=u.id
                 JOIN vehicules v ON t.vehicule_id=v.id
@@ -273,7 +286,6 @@ def sortie_voiture():
             """)
         tickets = cr.fetchall()
 
-
     return render_template("sortir.html", tickets=tickets)
 
 
@@ -281,7 +293,13 @@ def sortie_voiture():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return redirect(url_for("index"))
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
 
 if __name__ == "__main__":
-    app.run(port = 3000)
+    app.run(port=3000, debug=True)

@@ -1,7 +1,7 @@
 import sqlite3
 
 class Utilisateur:
-    def __init__(self, nom, email, password, role="Client"):
+    def __init__(self, nom, email, password, role="client"):
         self.nom = nom
         self.email = email
         self.password = password

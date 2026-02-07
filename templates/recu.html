@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Reçu de paiement - SmartPark{% endblock %}
+
+{% block content %}
+<div class="min-h-screen gradient-hero flex items-center justify-center py-20 px-4">
+  <div class="w-full max-w-md">
+    <div class="receipt animate-scale-in">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div style="width: 4rem; height: 4rem; margin: 0 auto 0.75rem; border-radius: 50%; background: linear-gradient(135deg, var(--parking-green) 0%, var(--green-500) 100%); display: flex; align-items: center; justify-content: center;">
+          <i data-lucide="check-circle" style="width: 32px; height: 32px; color: white;"></i>
+        </div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--parking-gray);">Paiement réussi</h3>
+        <p style="color: var(--gray-500); font-size: 0.875rem;">Ticket #{{ ticket.id }}</p>
+      </div>
+      
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Client</span>
+        <span style="font-weight: 500;">{{ ticket.nom }}</span>
+      </div>
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Matricule</span>
+        <span style="font-weight: 500;">{{ ticket.matricule }}</span>
+      </div>
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Place</span>
+        <span style="font-weight: 500;">{{ ticket.place_id }}</span>
+      </div>
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Entrée</span>
+        <span style="font-weight: 500;">{{ ticket.date_entree }}</span>
+      </div>
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Sortie</span>
+        <span style="font-weight: 500;">{{ ticket.date_sortie }}</span>
+      </div>
+      <div class="receipt-row">
+        <span style="color: var(--gray-500);">Durée</span>
+        <span style="font-weight: 500;">{{ "%.2f"|format(ticket.duree_heures) }}h</span>
+      </div>
+      
+      <div class="receipt-divider"></div>
+      
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.125rem; font-weight: 700;">
+        <span>Total</span>
+        <span style="color: var(--green-600);">{{ "%.2f"|format(ticket.montant) }}€</span>
+      </div>
+    </div>
+    
+    <div class="flex gap-3 mt-6 no-print">
+      <a href="/gardien" class="btn btn-outline flex-1">Retour</a>
+      <button onclick="window.print()" class="btn btn-dark flex-1">
+        <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
+        Imprimer
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

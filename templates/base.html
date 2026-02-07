@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SmartPark{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  {% block extra_css %}{% endblock %}
+<!--<base target="_blank">-->
+</head>
+<body>
+  {% block navbar %}
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="logo">
+        <div class="logo-icon">
+          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
+        </div>
+        <span class="logo-text">SmartPark</span>
+      </a>
+
+      <div class="nav-links">
+        {% if session.user_id %}
+          {% if session.role == 'admin' %}
+            <a href="/admin" class="nav-link">Dashboard</a>
+          {% elif session.role == 'gardien' %}
+            <a href="/gardien" class="nav-link">Dashboard</a>
+          {% else %}
+            <a href="/client" class="nav-link">Dashboard</a>
+          {% endif %}
+          <div class="user-menu">
+            <div class="user-avatar">
+              <i data-lucide="user" style="width: 16px; height: 16px; color: white;"></i>
+            </div>
+            <span class="user-role">{{ session.role }}</span>
+          </div>
+          <a href="/logout" class="btn btn-outline btn-sm">
+            <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+            Déconnexion
+          </a>
+        {% else %}
+          <a href="/" class="nav-link">Accueil</a>
+          <a href="/login" class="nav-link">Connexion</a>
+          <a href="/register" class="btn btn-primary btn-sm">S'inscrire</a>
+        {% endif %}
+      </div>
+
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      {% if session.user_id %}
+        {% if session.role == 'admin' %}
+          <a href="/admin">Dashboard</a>
+        {% elif session.role == 'gardien' %}
+          <a href="/gardien">Dashboard</a>
+        {% else %}
+          <a href="/client">Dashboard</a>
+        {% endif %}
+        <a href="/logout" style="color: var(--parking-red);">Déconnexion</a>
+      {% else %}
+        <a href="/">Accueil</a>
+        <a href="/login">Connexion</a>
+        <a href="/register" style="color: var(--parking-green); font-weight: 500;">S'inscrire</a>
+      {% endif %}
+    </div>
+  </nav>
+  {% endblock %}
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container" style="padding-top: 5rem;">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}" style="margin-bottom: 1rem;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+  <script>
+    // Mobile menu toggle
+    document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
+      document.getElementById('mobileMenu').classList.toggle('active');
+    });
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
