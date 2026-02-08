@@ -362,7 +362,7 @@ def cloturer_ticket():
         diff = now - date_entree
         duree_heures = diff.total_seconds() / 3600
 
-        montant = round(max(1, duree_heures) * 3, 2)
+        montant = round(duree_heures*3, 2)
 
         cr.execute(
             "UPDATE tickets SET date_sortie=?, montant=? WHERE id=?",
