@@ -35,7 +35,7 @@ def init_db():
         marque TEXT,
         couleur TEXT,
         user_id INTEGER,
-        FOREIGN KEY(user_id) REFERENCES utilisateurs(id)
+        FOREIGN KEY(user_id) REFERENCES utilisateurs(id)ON DELETE CASCADE
     )
     """)
 
@@ -58,9 +58,9 @@ def init_db():
         date_sortie TEXT,
         montant REAL,
         autorise INTEGER DEFAULT 0,  -- 0: non autorisé, 1: autorisé
-        FOREIGN KEY(user_id) REFERENCES utilisateurs(id),
-        FOREIGN KEY(vehicule_id) REFERENCES vehicules(id),
-        FOREIGN KEY(place_id) REFERENCES places(id)
+        FOREIGN KEY(user_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
+        FOREIGN KEY(vehicule_id) REFERENCES vehicules(id)ON DELETE CASCADE,
+        FOREIGN KEY(place_id) REFERENCES places(id)ON DELETE CASCADE
     )
     """)
 
@@ -77,7 +77,7 @@ def init_db():
         user_id INTEGER,
         montant REAL,
         date_paiement TEXT,
-        FOREIGN KEY(user_id) REFERENCES utilisateurs(id)
+        FOREIGN KEY(user_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
     )
     """)
 
