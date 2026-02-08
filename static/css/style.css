@@ -1327,3 +1327,67 @@ img {
     display: inline-grid;
   }
 }
+/* ============================================
+   NEW CUSTOM STYLES
+   ============================================ */
+
+/* Alerts */
+.alert {
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.alert-error {
+  background: var(--red-100);
+  color: var(--red-600);
+  border: 1px solid #FC8181;
+}
+
+.alert-success {
+  background: var(--green-100);
+  color: var(--green-700);
+  border: 1px solid #9AE6B4;
+}
+
+/* Additional Utilities */
+.opacity-50 { opacity: 0.5; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* Status Labels */
+.status-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-pending { background: #FEF3C7; color: #92400E; }
+.status-authorized { background: #D1FAE5; color: #065F46; }
+
+/* Dashboard Adjustments */
+.kpi-card {
+  transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+}
+
+.chart-container {
+  min-height: 250px;
+}
+
+/* Print Styles */
+@media print {
+  .no-print { display: none !important; }
+  .receipt { box-shadow: none !important; border: 1px solid #eee !important; }
+}

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sortie de véhicule - SmartPark</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .sortie-page {
+      min-height: 100vh;
+      background: var(--parking-light);
+      padding-top: 5rem;
+      padding-bottom: 2rem;
+    }
+    .ticket-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid var(--parking-blue);
+    }
+    .ticket-info h3 {
+      font-weight: 700;
+      color: var(--parking-gray);
+    }
+    .ticket-info p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="logo">
+        <div class="logo-icon">
+          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
+        </div>
+        <span class="logo-text">SmartPark</span>
+      </a>
+      <div class="nav-links">
+        {% if session.role == 'admin' %}
+          <a href="/admin" class="nav-link">Dashboard</a>
+        {% elif session.role == 'gardien' %}
+          <a href="/gardien" class="nav-link">Dashboard</a>
+        {% else %}
+          <a href="/client" class="nav-link">Dashboard</a>
+        {% endif %}
+        <a href="/logout" class="btn btn-outline btn-sm">Déconnexion</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="sortie-page">
+    <div class="container">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Sortie de véhicule</h1>
+        <p class="dashboard-subtitle">Sélectionnez votre ticket pour valider la sortie et payer</p>
+      </div>
+
+      <div class="tickets-container">
+        {% if tickets %}
+          {% for ticket in tickets %}
+          <div class="ticket-card">
+            <div class="ticket-info">
+              <h3>{{ ticket[2] }} ({{ ticket[1] }})</h3>
+              <p>Place: {{ ticket[3] }} | Entrée: {{ ticket[4] }}</p>
+            </div>
+            <form action="/sortir" method="POST">
+              <input type="hidden" name="ticket_id" value="{{ ticket[0] }}">
+              <button type="submit" class="btn btn-primary">
+                Valider la sortie
+              </button>
+            </form>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="card">
+            <div class="card-body text-center py-10">
+              <i data-lucide="info" style="width: 48px; height: 48px; color: var(--gray-400); margin: 0 auto 1rem;"></i>
+              <p class="text-gray-500">Aucun véhicule en cours pour votre compte.</p>
+              <a href="/client" class="btn btn-primary mt-4">Réserver une place</a>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/js/script.js"></script>
+</body>
+</html>

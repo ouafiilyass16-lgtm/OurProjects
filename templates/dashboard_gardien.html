@@ -1,355 +1,167 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Gardien - SmartPark</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../static/css/style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
+{% extends "base.html" %}
+
+{% block title %}Terminal Gardien - SmartPark{% endblock %}
+
+{% block extra_css %}
+<style>
     .dashboard-page {
       min-height: 100vh;
       background: var(--parking-light);
       padding-top: 5rem;
       padding-bottom: 2rem;
     }
-
-    .dashboard-header {
-      margin-bottom: 1.5rem;
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
     }
-
-    .dashboard-title {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: var(--parking-gray);
-      margin-bottom: 0.5rem;
-    }
-
-    .dashboard-subtitle {
-      color: var(--gray-600);
-    }
-
-    .search-card {
+    .kpi-card {
       background: white;
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-
-    .search-input-wrapper {
-      position: relative;
-      padding: 1rem;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 1rem 1rem 1rem 3rem;
-      font-size: 1.125rem;
-      border: 1px solid var(--gray-300);
-      border-radius: var(--radius);
-      transition: all var(--transition);
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--parking-green);
-      box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 1.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--gray-400);
-    }
-
-    .tickets-list {
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .ticket-card {
-      padding: 1rem;
-      border-radius: var(--radius-lg);
-      border: 2px solid var(--gray-200);
-      cursor: pointer;
-      transition: all var(--transition);
-      background: white;
-    }
-
-    .ticket-card:hover {
-      border-color: var(--parking-blue);
-      background: #EBF8FF;
-    }
-
-    .ticket-card.selected {
-      border-color: var(--parking-green);
-      background: #F0FFF4;
-    }
-
-    .payment-section {
-      margin-top: 1.5rem;
-      background: white;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      border-left: 4px solid var(--parking-green);
-      overflow: hidden;
-    }
-
-    .payment-content {
-      padding: 1.5rem;
-    }
-
-    .payment-amount {
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--parking-green);
-      margin-bottom: 0.25rem;
-    }
-
-    .payment-duration {
-      color: var(--gray-500);
-      margin-bottom: 1rem;
-    }
-
-    .payment-actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .receipt {
-      background: var(--gray-100);
-      border: 2px dashed var(--gray-300);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-    }
-
-    .receipt-header {
+      justify-content: center;
+      align-items: center;
       text-align: center;
-      margin-bottom: 1.5rem;
     }
-
-    .receipt-icon {
-      width: 4rem;
-      height: 4rem;
-      margin: 0 auto 0.75rem;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--parking-green) 0%, var(--green-500) 100%);
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--parking-gray);
+    }
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+    .ticket-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid var(--parking-orange);
+    }
+    .mini-parking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 8px;
+    }
+    .mini-spot {
+      aspect-ratio: 1;
+      border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .receipt-title {
-      font-size: 1.25rem;
+      font-size: 0.6rem;
       font-weight: 700;
-      color: var(--parking-gray);
+      color: white;
     }
+    .mini-spot.free { background: #9ae6b4; }
+    .mini-spot.occupied { background: #feb2b2; }
+</style>
+{% endblock %}
 
-    .receipt-subtitle {
-      color: var(--gray-500);
-      font-size: 0.875rem;
-    }
+{% block content %}
+<main class="dashboard-page">
+  <div class="container">
+    <div class="dashboard-header animate-fade-in">
+      <h1 class="dashboard-title">Terminal Gardien</h1>
+      <p class="dashboard-subtitle">Gestion du parking en temps réel</p>
+    </div>
 
-    .receipt-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      font-size: 0.875rem;
-    }
+    <!-- Gardien KPIs -->
+    <div class="kpi-grid mt-6">
+      <div class="kpi-card">
+        <div class="kpi-value">{{ nb_parked }}</div>
+        <div class="kpi-label">Véhicules stationnés</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: var(--parking-orange);">{{ pending_exits|length }}</div>
+        <div class="kpi-label">Demandes de sortie</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: var(--parking-green);">{{ nb_entries_today }}</div>
+        <div class="kpi-label">Entrées aujourd'hui</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: var(--parking-blue);">{{ nb_exits_today }}</div>
+        <div class="kpi-label">Sorties validées</div>
+      </div>
+    </div>
 
-    .receipt-row .label {
-      color: var(--gray-500);
-    }
-
-    .receipt-row .value {
-      font-weight: 500;
-    }
-
-    .receipt-divider {
-      height: 1px;
-      background: var(--gray-300);
-      margin: 0.75rem 0;
-    }
-
-    .receipt-total {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      font-size: 1.125rem;
-      font-weight: 700;
-    }
-
-    .receipt-total .value {
-      color: var(--parking-green);
-    }
-
-    @media print {
-      .no-print {
-        display: none !important;
-      }
-    }
-  </style>
-<base target="_blank">
-</head>
-<body class="page-gardien">
-  <!-- Navigation -->
-  <nav class="navbar no-print">
-    <div class="container navbar-inner">
-      <a href="/" class="logo">
-        <div class="logo-icon">
-          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
-        </div>
-        <span class="logo-text">SmartPark</span>
-      </a>
-
-      <div class="nav-links">
-        <a href="/gardien" class="nav-link">Dashboard</a>
-        <div class="user-menu">
-          <div class="user-avatar">
-            <i data-lucide="shield" style="width: 16px; height: 16px; color: white;"></i>
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Left: Pending Exits -->
+      <div class="md:col-span-2">
+        <div class="card">
+          <div class="card-header flex justify-between items-center">
+            <h2 class="text-lg font-semibold">Demandes de sortie en attente</h2>
+            <span class="badge badge-orange">{{ pending_exits|length }}</span>
           </div>
-          <span class="user-role">Gardien</span>
-        </div>
-        <button class="btn btn-outline btn-sm" id="logoutBtn">
-          <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
-          Déconnexion
-        </button>
-      </div>
-
-      <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
-      </button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="/gardien">Dashboard</a>
-      <button id="logoutBtnMobile" style="color: var(--parking-red); width: 100%; text-align: left; background: none; border: none; padding: 0.75rem; font-size: 1rem;">
-        Déconnexion
-      </button>
-    </div>
-  </nav>
-
-  <!-- Dashboard Content -->
-  <main class="dashboard-page">
-    <div class="container" style="max-width: 64rem;">
-      <!-- Header -->
-      <div class="dashboard-header animate-fade-in">
-        <h1 class="dashboard-title">Terminal Gardien</h1>
-        <p class="dashboard-subtitle">Gestion rapide des sorties de véhicules</p>
-      </div>
-
-      <!-- Search -->
-      <div class="search-card animate-fade-in-up delay-100 no-print">
-        <div class="search-input-wrapper">
-          <i data-lucide="search" class="search-icon" style="width: 20px; height: 20px;"></i>
-          <input
-            type="text"
-            id="searchTickets"
-            class="search-input"
-            placeholder="Rechercher par matricule ou client..."
-            autofocus
-          >
-        </div>
-      </div>
-
-      <!-- Active Tickets -->
-      <div class="card animate-fade-in-up delay-200 no-print">
-        <div class="card-header">
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            <i data-lucide="car" class="text-blue-600" style="width: 20px; height: 20px;"></i>
-            Véhicules en cours
-          </h2>
-        </div>
-        <div class="card-body">
-          <div class="tickets-list" id="ticketsList">
-            <!-- Tickets will be rendered by JS -->
+          <div class="card-body">
+            {% if pending_exits %}
+              {% for ticket in pending_exits %}
+              <div class="ticket-card">
+                <div>
+                  <h3 class="font-bold text-lg">{{ ticket[2] }}</h3>
+                  <p class="text-sm text-gray-500">
+                    <i data-lucide="user" class="inline w-3 h-3"></i> {{ ticket[1] }} |
+                    <i data-lucide="map-pin" class="inline w-3 h-3"></i> Place #{{ ticket[3] }}
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">Entrée: {{ ticket[4] }}</p>
+                </div>
+                <form action="/autoriser_sortie" method="POST">
+                  <input type="hidden" name="ticket_id" value="{{ ticket[0] }}">
+                  <button type="submit" class="btn btn-primary">
+                    <i data-lucide="check-circle" class="mr-2"></i> Valider sortie
+                  </button>
+                </form>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-10">
+                <i data-lucide="coffee" class="mx-auto w-12 h-12 text-gray-300 mb-3"></i>
+                <p class="text-gray-500">Aucune demande de sortie pour le moment.</p>
+              </div>
+            {% endif %}
           </div>
         </div>
       </div>
 
-      <!-- Payment Section -->
-      <div class="payment-section hidden" id="paymentSection">
-        <div class="payment-content">
-          <p class="text-sm text-gray-500 mb-1">Montant à payer</p>
-          <p class="payment-amount" id="paymentAmount">0.00MAD</p>
-          <p class="payment-duration" id="paymentDuration">Durée: 0h</p>
-          <div class="payment-actions no-print">
-            <button class="btn btn-outline" id="cancelPayment">Annuler</button>
-            <button class="btn btn-primary" id="processPayment" style="min-height: 56px; padding: 0 2rem;">
-              <i data-lucide="credit-card" style="width: 20px; height: 20px;"></i>
-              Payer
-            </button>
+      <!-- Right: Parking Map View -->
+      <div class="md:col-span-1">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="text-lg font-semibold">Plan du parking</h2>
           </div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Receipt Modal -->
-  <div class="modal-overlay" id="receiptModal">
-    <div class="modal" style="max-width: 400px;">
-      <div class="modal-body">
-        <div class="receipt">
-          <div class="receipt-header">
-            <div class="receipt-icon">
-              <i data-lucide="check-circle" style="width: 32px; height: 32px; color: white;"></i>
+          <div class="card-body">
+            <div class="mini-parking-grid">
+              {% for spot in places %}
+                <div class="mini-spot {{ 'free' if spot[1] == 1 else 'occupied' }}" title="Place #{{ spot[0] }}">
+                  {{ spot[0] }}
+                </div>
+              {% endfor %}
             </div>
-            <h3 class="receipt-title">Paiement réussi</h3>
-            <p class="receipt-subtitle">Ticket #<span id="receiptTicketId">T001</span></p>
-          </div>
-
-          <div class="receipt-row">
-            <span class="label">Client</span>
-            <span class="value" id="receiptClient">Jean Dupont</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">Matricule</span>
-            <span class="value" id="receiptMatricule">AB-123-CD</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">Place</span>
-            <span class="value" id="receiptSpot">A2</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">Entrée</span>
-            <span class="value" id="receiptEntry">2024-01-15 09:30</span>
-          </div>
-          <div class="receipt-row">
-            <span class="label">Sortie</span>
-            <span class="value" id="receiptExit">2024-01-15 14:30</span>
-          </div>
-
-          <div class="receipt-divider"></div>
-
-          <div class="receipt-total">
-            <span>Total</span>
-            <span class="value" id="receiptAmount">5.00MAD</span>
+            <div class="mt-4 flex gap-4 text-xs font-bold">
+              <div class="flex items-center gap-1">
+                <div class="w-3 h-3 rounded bg-[#9ae6b4]"></div> <span>Libre</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <div class="w-3 h-3 rounded bg-[#feb2b2]"></div> <span>Occupé</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="modal-footer no-print">
-        <button class="btn btn-outline" id="closeReceiptBtn">Fermer</button>
-        <button class="btn btn-dark" id="printReceipt">
-          <i data-lucide="printer" style="width: 16px; height: 16px;"></i>
-          Imprimer
-        </button>
       </div>
     </div>
   </div>
-
-  <script src="/static/js/script.js"></script>
-  <script>
-    // Cancel payment button
-    document.getElementById('cancelPayment')?.addEventListener('click', function() {
-      document.getElementById('paymentSection').classList.add('hidden');
-      document.querySelectorAll('.ticket-card').forEach(c => c.classList.remove('selected'));
-    });
-  </script>
-</body>
-</html>
+</main>
+{% endblock %}

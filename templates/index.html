@@ -1,45 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SmartPark - Gestion de Parking Intelligente</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../static/css/style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
-<base target="_blank">
-</head>
-<body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="container navbar-inner">
-      <a href="/" class="logo">
-        <div class="logo-icon">
-          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
-        </div>
-        <span class="logo-text">SmartPark</span>
-      </a>
+{% extends "base.html" %}
 
-      <div class="nav-links">
-        <a href="/" class="nav-link">Accueil</a>
-        <a href="/login" class="nav-link">Connexion</a>
-        <a href="/register" class="btn btn-primary btn-sm">S'inscrire</a>
-      </div>
+{% block title %}SmartPark - Gestion de Parking Intelligente{% endblock %}
 
-      <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
-      </button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="/">Accueil</a>
-      <a href="/login">Connexion</a>
-      <a href="/register" style="color: var(--parking-green); font-weight: 500;">S'inscrire</a>
-    </div>
-  </nav>
-
+{% block content %}
   <!-- Hero Section -->
   <section class="hero">
     <div class="hero-bg"></div>
@@ -71,31 +34,6 @@
             <i data-lucide="user" style="width: 20px; height: 20px;"></i>
             S'inscrire
           </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Floating Cards -->
-    <div class="floating-card floating-card-1">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-          <i data-lucide="check-circle" class="text-green-600" style="width: 20px; height: 20px;"></i>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Places libres</p>
-          <p class="text-2xl font-bold text-green-600">6/10</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="floating-card floating-card-2">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-          <i data-lucide="dollar-sign" class="text-blue-600" style="width: 20px; height: 20px;"></i>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Revenus aujourd'hui</p>
-          <p class="text-2xl font-bold text-blue-600">180€</p>
         </div>
       </div>
     </div>
@@ -147,49 +85,6 @@
     </div>
   </section>
 
-  <!-- Stats Section -->
-  <section class="stats-section">
-    <div class="container">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div class="stat-item animate-fade-in">
-          <p class="stat-number">500+</p>
-          <p class="stat-text">Utilisateurs</p>
-        </div>
-        <div class="stat-item animate-fade-in delay-100">
-          <p class="stat-number">10K+</p>
-          <p class="stat-text">Réservations</p>
-        </div>
-        <div class="stat-item animate-fade-in delay-200">
-          <p class="stat-number">99.9%</p>
-          <p class="stat-text">Uptime</p>
-        </div>
-        <div class="stat-item animate-fade-in delay-300">
-          <p class="stat-number">&lt;15s</p>
-          <p class="stat-text">Sortie moyenne</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA Section -->
-  <section class="py-20 gradient-hero">
-    <div class="container">
-      <div class="text-center max-w-3xl mx-auto">
-        <h2 class="text-3xl md:text-4xl font-bold text-parking-gray mb-6">
-          Prêt à simplifier votre gestion de parking ?
-        </h2>
-        <p class="text-gray-600 mb-8">
-          Rejoignez les centaines d'utilisateurs qui font confiance à SmartPark
-          pour leur gestion quotidienne.
-        </p>
-        <a href="/register" class="btn btn-primary btn-lg">
-          Commencer gratuitement
-          <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
-        </a>
-      </div>
-    </div>
-  </section>
-
   <!-- Footer -->
   <footer class="footer">
     <div class="container footer-content">
@@ -201,14 +96,11 @@
       </div>
 
       <div class="footer-links">
-        <a href="terms.html" class="footer-link">Conditions d'utilisation</a>
-        <a href="privacy.html" class="footer-link">Politique de confidentialité</a>
+        <a href="/terms" class="footer-link">Conditions d'utilisation</a>
+        <a href="/privacy" class="footer-link">Politique de confidentialité</a>
       </div>
 
       <p class="footer-copy">© 2024 SmartPark. Tous droits réservés.</p>
     </div>
   </footer>
-
-  <script src="/static/js/script.js"></script>
-</body>
-</html>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from datetime import datetime
 from database import init_db, DB_PATH
 from GestionParking import GestionParking
@@ -9,10 +9,14 @@ from Vehicule import Vehicule
 from Ticket import Ticket
 from Paiement import Paiement
 import calendar
+import os
+import json
 
 app = Flask(__name__)
 app.secret_key = "secret"
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+# S'assurer que la base de données est initialisée
 init_db()
 
 
@@ -31,11 +35,10 @@ def login():
         user = Utilisateur.verifier_connexion(email, password)
 
         if user:
-            print("Utilisateur trouvé:", user)
             session["user_id"] = user[0]
-            # Normaliser le rôle en minuscules pour la cohérence
             role_lower = user[4].lower()
             session["role"] = role_lower
+            session["user_name"] = user[1]
 
             if role_lower == "admin":
                 return redirect(url_for("admin_dashboard"))
@@ -44,7 +47,7 @@ def login():
             else:
                 return redirect(url_for("client_dashboard"))
 
-        return "❌ Email ou mot de passe incorrect"
+        flash("❌ Email ou mot de passe incorrect", "error")
     return render_template("login.html")
 
 
@@ -57,17 +60,16 @@ def register():
         password = request.form.get("password")
         role = request.form.get("role", "client")
 
-        # Validation basique du rôle
         if role.lower() not in ["client", "gardien", "admin"]:
             role = "client"
 
         user = Utilisateur(nom, email, password, role)
         try:
             user.enregistrer()
+            flash("Compte créé avec succès ! Connectez-vous.", "success")
             return redirect(url_for("login"))
         except Exception as e:
-            print(f"Erreur d'inscription: {e}")
-            return "❌ Email déjà utilisé ou erreur lors de l'inscription"
+            flash("❌ Email déjà utilisé ou erreur lors de l'inscription", "error")
     return render_template("register.html")
 
 
@@ -76,17 +78,61 @@ def register():
 def client_dashboard():
     if session.get("role") != "client":
         return redirect(url_for("login"))
-    places = Place.places_libres()
-    return render_template("dashboard_client.html", places=places)
+
+    user_id = session["user_id"]
+
+    with sqlite3.connect(DB_PATH) as db:
+        cr = db.cursor()
+        cr.execute("""
+            SELECT p.id, p.libre, v.matricule, v.marque
+            FROM places p
+            LEFT JOIN tickets t ON p.id = t.place_id AND t.date_sortie IS NULL
+            LEFT JOIN vehicules v ON t.vehicule_id = v.id
+            ORDER BY p.id ASC
+        """)
+        places_data = cr.fetchall()
+
+        cr.execute("""
+            SELECT t.id, t.place_id, t.date_entree, t.autorise, v.matricule
+            FROM tickets t
+            JOIN vehicules v ON t.vehicule_id = v.id
+            WHERE t.user_id = ? AND t.date_sortie IS NULL
+        """, (user_id,))
+        current_ticket = cr.fetchone()
+
+        cr.execute("""
+            SELECT date_entree, date_sortie, montant
+            FROM tickets
+            WHERE user_id = ? AND date_sortie IS NOT NULL
+            ORDER BY date_sortie DESC LIMIT 10
+        """, (user_id,))
+        history = cr.fetchall()
+
+    duration_str = "0h 0m"
+    if current_ticket:
+        date_entree = datetime.strptime(current_ticket[2], "%Y-%m-%d %H:%M:%S")
+        diff = datetime.now() - date_entree
+        hours = int(diff.total_seconds() // 3600)
+        minutes = int((diff.total_seconds() % 3600) // 60)
+        duration_str = f"{hours}h {minutes}m"
+
+    mid = len(places_data) // 2
+    row1 = places_data[:mid]
+    row2 = places_data[mid:]
+
+    return render_template("dashboard_client.html",
+                           row1=row1, row2=row2,
+                           current_ticket=current_ticket,
+                           duration=duration_str,
+                           history=history)
 
 
 # ---------------- Gardien Dashboard ----------------
-@app.route("/gardien", methods=["GET", "POST"])
+@app.route("/gardien")
 def gardien_dashboard():
     if session.get("role") != "gardien":
         return redirect(url_for("login"))
 
-    # Récupérer tous les tickets en cours
     with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
         cr.execute("""
@@ -95,30 +141,43 @@ def gardien_dashboard():
             JOIN utilisateurs u ON t.user_id=u.id
             JOIN vehicules v ON t.vehicule_id=v.id
             JOIN places p ON t.place_id=p.id
-            WHERE t.date_sortie IS NULL
+            WHERE t.date_sortie IS NULL AND t.autorise = 0
         """)
-        tickets = cr.fetchall()
+        pending_exits = cr.fetchall()
 
-    return render_template("dashboard_gardien.html", tickets=tickets)
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE date_sortie IS NULL")
+        nb_parked = cr.fetchone()[0]
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE date_entree LIKE ?", (today + "%",))
+        nb_entries_today = cr.fetchone()[0]
+
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE date_sortie LIKE ?", (today + "%",))
+        nb_exits_today = cr.fetchone()[0]
+
+        cr.execute("SELECT id, libre FROM places ORDER BY id ASC")
+        places = cr.fetchall()
+
+    return render_template("dashboard_gardien.html",
+                           pending_exits=pending_exits,
+                           nb_parked=nb_parked,
+                           nb_entries_today=nb_entries_today,
+                           nb_exits_today=nb_exits_today,
+                           places=places)
 
 
-@app.route("/valider_ticket", methods=["POST"])
-def valider_ticket():
+@app.route("/autoriser_sortie", methods=["POST"])
+def autoriser_sortie():
     if session.get("role") != "gardien":
         return redirect(url_for("login"))
 
     ticket_id = request.form.get("ticket_id")
-
     with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
-        # Autoriser la sortie (si le champ existe, sinon cette ligne pourrait échouer)
-        try:
-            cr.execute("UPDATE tickets SET autorise=1 WHERE id=?", (ticket_id,))
-            db.commit()
-        except sqlite3.OperationalError:
-            # Si la colonne 'autorise' n'existe pas, on ignore ou on gère autrement
-            pass
+        cr.execute("UPDATE tickets SET autorise=1 WHERE id=?", (ticket_id,))
+        db.commit()
 
+    flash("Sortie autorisée avec succès", "success")
     return redirect(url_for("gardien_dashboard"))
 
 
@@ -128,20 +187,96 @@ def admin_dashboard():
     if session.get("role") != "admin":
         return redirect(url_for("login"))
 
-    # Statistiques globales
-    nb_users, nb_vehicules, chiffre_total = GestionParking.get_stats_admin()
+    with sqlite3.connect(DB_PATH) as db:
+        cr = db.cursor()
 
-    # Chiffre journalier (aujourd'hui)
-    chiffre_journalier = GestionParking.get_chiffre_journalier()
+        # 1. KPIs de base
+        cr.execute("SELECT COUNT(*) FROM utilisateurs WHERE LOWER(role)='client'")
+        nb_users = cr.fetchone()[0]
 
-    # Chiffre mensuel (ce mois)
-    chiffre_mensuel = GestionParking.get_chiffre_mensuel()
+        cr.execute("SELECT COUNT(*) FROM vehicules")
+        nb_vehicules = cr.fetchone()[0]
 
-    # Liste des utilisateurs (clients)
-    utilisateurs = GestionParking.get_users()
+        cr.execute("SELECT SUM(montant) FROM tickets WHERE date_sortie IS NOT NULL")
+        res = cr.fetchone()[0]
+        chiffre_total = res if res else 0
 
-    # Liste des véhicules
-    vehicules = GestionParking.get_vehicules()
+        cr.execute("SELECT COUNT(*) FROM places")
+        places_totales = cr.fetchone()[0]
+
+        cr.execute("SELECT COUNT(*) FROM places WHERE libre=1")
+        places_libres = cr.fetchone()[0]
+
+        cr.execute("SELECT COUNT(*) FROM places WHERE libre=0")
+        places_occupees = cr.fetchone()[0]
+
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE date_sortie IS NULL AND autorise=0")
+        sorties_en_attente = cr.fetchone()[0]
+
+        # 2. Revenus (Jour, Mois, Année)
+        today = datetime.now().strftime("%Y-%m-%d")
+        this_month = datetime.now().strftime("%Y-%m")
+        this_year = datetime.now().strftime("%Y")
+
+        cr.execute("SELECT SUM(montant) FROM tickets WHERE date_sortie LIKE ?", (today + "%",))
+        res_j = cr.fetchone()[0]
+        chiffre_journalier = res_j if res_j else 0
+
+        cr.execute("SELECT SUM(montant) FROM tickets WHERE date_sortie LIKE ?", (this_month + "%",))
+        res_m = cr.fetchone()[0]
+        chiffre_mensuel = res_m if res_m else 0
+
+        cr.execute("SELECT SUM(montant) FROM tickets WHERE date_sortie LIKE ?", (this_year + "%",))
+        res_y = cr.fetchone()[0]
+        chiffre_annuel = res_y if res_y else 0
+
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE date_sortie LIKE ?", (today + "%",))
+        tickets_clotures_today = cr.fetchone()[0]
+
+        # 3. Données pour les graphiques
+        cr.execute("""
+            SELECT strftime('%H', date_entree) as heure, COUNT(*) 
+            FROM tickets WHERE date_entree LIKE ? 
+            GROUP BY heure
+        """, (today + "%",))
+        entrees_par_heure = dict(cr.fetchall())
+
+        cr.execute("""
+            SELECT strftime('%H', date_sortie) as heure, COUNT(*) 
+            FROM tickets WHERE date_sortie LIKE ? 
+            GROUP BY heure
+        """, (today + "%",))
+        sorties_par_heure = dict(cr.fetchall())
+
+        cr.execute("""
+            SELECT strftime('%Y-%m-%d', date_sortie) as jour, SUM(montant)
+            FROM tickets WHERE date_sortie IS NOT NULL
+            GROUP BY jour ORDER BY jour DESC LIMIT 7
+        """)
+        revenus_7j = cr.fetchall()
+
+        # 4. Tables de données
+        cr.execute("""
+            SELECT t.date_entree, t.date_sortie, t.montant, u.nom, v.matricule
+            FROM tickets t
+            JOIN utilisateurs u ON t.user_id = u.id
+            JOIN vehicules v ON t.vehicule_id = v.id
+            WHERE t.date_sortie IS NOT NULL
+            ORDER BY t.date_sortie DESC LIMIT 10
+        """)
+        dernieres_sorties = cr.fetchall()
+
+        cr.execute("SELECT id, nom, email FROM utilisateurs WHERE LOWER(role)='client'")
+        utilisateurs_rows = cr.fetchall()
+        utilisateurs = [{"id": r[0], "nom": r[1], "email": r[2]} for r in utilisateurs_rows]
+
+        cr.execute("""
+            SELECT v.matricule, v.marque, v.couleur, u.nom
+            FROM vehicules v
+            JOIN utilisateurs u ON v.user_id = u.id
+        """)
+        vehicules_rows = cr.fetchall()
+        vehicules = [{"matricule": r[0], "marque": r[1], "couleur": r[2], "user": r[3]} for r in vehicules_rows]
 
     return render_template(
         "dashboard_admin.html",
@@ -150,8 +285,19 @@ def admin_dashboard():
         chiffre_total=chiffre_total,
         chiffre_journalier=chiffre_journalier,
         chiffre_mensuel=chiffre_mensuel,
+        chiffre_annuel=chiffre_annuel,
+        places_totales=places_totales,
+        places_libres=places_libres,
+        places_occupees=places_occupees,
+        sorties_en_attente=sorties_en_attente,
+        tickets_clotures_today=tickets_clotures_today,
+        entrees_par_heure=json.dumps(entrees_par_heure),
+        sorties_par_heure=json.dumps(sorties_par_heure),
+        revenus_7j=json.dumps(dict(revenus_7j)),
+        dernieres_sorties=dernieres_sorties,
         utilisateurs=utilisateurs,
-        vehicules=vehicules
+        vehicules=vehicules,
+        now=datetime.now()
     )
 
 
@@ -168,128 +314,76 @@ def choisir_place():
 
     with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
+        cr.execute("SELECT COUNT(*) FROM tickets WHERE user_id=? AND date_sortie IS NULL", (user_id,))
+        if cr.fetchone()[0] > 0:
+            flash("❌ Vous avez déjà une réservation en cours !", "error")
+            return redirect(url_for("client_dashboard"))
 
-        # Vérifier si le client a déjà un véhicule en cours
-        cr.execute("""
-            SELECT COUNT(*) FROM tickets
-            WHERE user_id=? AND date_sortie IS NULL
-        """, (user_id,))
-        actif = cr.fetchone()[0]
-
-        if actif > 0:
-            return "❌ Vous avez déjà une réservation en cours !"
-
-        # Ajouter véhicule
-        cr.execute(
-            "INSERT INTO vehicules (matricule, marque, couleur, user_id) VALUES (?,?,?,?)",
-            (matricule, marque, couleur, user_id)
-        )
+        cr.execute("INSERT INTO vehicules (matricule, marque, couleur, user_id) VALUES (?,?,?,?)",
+                   (matricule, marque, couleur, user_id))
         vehicule_id = cr.lastrowid
 
-        # Créer ticket
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cr.execute(
-            """INSERT INTO tickets (user_id, vehicule_id, place_id, date_entree, date_sortie, montant)
-               VALUES (?,?,?,?,?,?)""",
-            (user_id, vehicule_id, place_id, now, None, None)
-        )
+        cr.execute("INSERT INTO tickets (user_id, vehicule_id, place_id, date_entree, autorise) VALUES (?,?,?,?,0)",
+                   (user_id, vehicule_id, place_id, now))
 
-        # Occuper la place
         cr.execute("UPDATE places SET libre=0 WHERE id=?", (place_id,))
-
         db.commit()
 
+    flash("Place réservée avec succès !", "success")
     return redirect(url_for("client_dashboard"))
 
 
-@app.route("/sortir", methods=["GET", "POST"])
-def sortie_voiture():
-    if not session.get("role"):
+@app.route("/cloturer_ticket", methods=["POST"])
+def cloturer_ticket():
+    if not session.get("user_id"):
         return redirect(url_for("login"))
+
+    ticket_id = request.form.get("ticket_id")
 
     with sqlite3.connect(DB_PATH) as db:
         cr = db.cursor()
+        cr.execute("""
+            SELECT t.date_entree, t.place_id, t.user_id, t.vehicule_id, t.autorise, u.nom, v.matricule
+            FROM tickets t
+            JOIN utilisateurs u ON t.user_id = u.id
+            JOIN vehicules v ON t.vehicule_id = v.id
+            WHERE t.id=?
+        """, (ticket_id,))
+        ticket_info = cr.fetchone()
 
-        if request.method == "POST":
-            ticket_id = request.form.get("ticket_id")
+        if not ticket_info or ticket_info[4] == 0:
+            flash("Sortie non autorisée ou ticket introuvable", "error")
+            return redirect(url_for("client_dashboard"))
 
-            # Récupérer le ticket
-            cr.execute("SELECT date_entree, place_id, user_id, vehicule_id FROM tickets WHERE id=?", (ticket_id,))
-            ticket_info = cr.fetchone()
-            if not ticket_info:
-                return "❌ Ticket introuvable"
+        date_entree_str, place_id, user_id, vehicule_id, _, nom_client, matricule = ticket_info
+        date_entree = datetime.strptime(date_entree_str, "%Y-%m-%d %H:%M:%S")
+        now = datetime.now()
+        diff = now - date_entree
+        duree_heures = diff.total_seconds() / 3600
 
-            date_entree_str, place_id, user_id, vehicule_id = ticket_info
-            date_entree = datetime.strptime(date_entree_str, "%Y-%m-%d %H:%M:%S")
-            now = datetime.now()
-            duree_heures = (now - date_entree).total_seconds() / 3600
+        montant = round(max(1, duree_heures) * 3, 2)
 
-            # Récupérer le tarif
-            cr.execute("SELECT prix_par_heure FROM tarifs LIMIT 1")
-            tarif_row = cr.fetchone()
-            tarif = tarif_row[0] if tarif_row else 10
+        cr.execute(
+            "UPDATE tickets SET date_sortie=?, montant=? WHERE id=?",
+            (now.strftime("%Y-%m-%d %H:%M:%S"), montant, ticket_id)
+        )
+        cr.execute("UPDATE places SET libre=1 WHERE id=?", (place_id,))
+        cr.execute(
+            "INSERT INTO paiements(user_id, montant, date_paiement) VALUES (?,?,?)",
+            (user_id, montant, now.strftime("%Y-%m-%d %H:%M:%S"))
+        )
+        db.commit()
 
-            montant = round(max(1, duree_heures) * tarif, 2)
-
-            # Mettre à jour ticket + libérer place + ajouter paiement
-            cr.execute(
-                "UPDATE tickets SET date_sortie=?, montant=? WHERE id=?",
-                (now.strftime("%Y-%m-%d %H:%M:%S"), montant, ticket_id)
-            )
-            cr.execute("UPDATE places SET libre=1 WHERE id=?", (place_id,))
-            cr.execute(
-                "INSERT INTO paiements(user_id, montant, date_paiement) VALUES (?,?,?)",
-                (user_id, montant, now.strftime("%Y-%m-%d %H:%M:%S"))
-            )
-            db.commit()
-
-            # Préparer les infos pour le reçu
-            cr.execute("SELECT nom FROM utilisateurs WHERE id=?", (user_id,))
-            nom_client = cr.fetchone()[0]
-
-            cr.execute("SELECT matricule FROM vehicules WHERE id=?", (vehicule_id,))
-            matricule = cr.fetchone()[0]
-
-            ticket = {
-                "id": ticket_id,
-                "nom": nom_client,
-                "matricule": matricule,
-                "place_id": place_id,
-                "date_entree": date_entree_str,
-                "date_sortie": now.strftime("%Y-%m-%d %H:%M:%S"),
-                "duree_heures": round(duree_heures, 2),
-                "montant": montant
-            }
-
-            return render_template("recu.html", ticket=ticket)
-
-        # GET → afficher les tickets en cours
-        role = session.get("role").lower()
-        if role == "client":
-            user_id = session["user_id"]
-            cr.execute("""
-                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree
-                FROM tickets t
-                JOIN utilisateurs u ON t.user_id=u.id
-                JOIN vehicules v ON t.vehicule_id=v.id
-                JOIN places p ON t.place_id=p.id
-                WHERE t.date_sortie IS NULL AND t.user_id=?
-            """, (user_id,))
-        else:
-            cr.execute("""
-                SELECT t.id, u.nom, v.matricule, p.id, t.date_entree
-                FROM tickets t
-                JOIN utilisateurs u ON t.user_id=u.id
-                JOIN vehicules v ON t.vehicule_id=v.id
-                JOIN places p ON t.place_id=p.id
-                WHERE t.date_sortie IS NULL
-            """)
-        tickets = cr.fetchall()
-
-    return render_template("sortir.html", tickets=tickets)
+        ticket_res = {
+            "id": ticket_id, "nom": nom_client, "matricule": matricule,
+            "place_id": place_id, "date_entree": date_entree_str,
+            "date_sortie": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "duree_heures": round(duree_heures, 2), "montant": montant
+        }
+        return render_template("recu.html", ticket=ticket_res)
 
 
-# ---------------- Logout ----------------
 @app.route("/logout")
 def logout():
     session.clear()

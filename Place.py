@@ -25,3 +25,12 @@ class Place:
         cr.execute("UPDATE places SET libre=1 WHERE id=?", (place_id,))
         db.commit()
         db.close()
+
+    @staticmethod
+    def get_all_places():
+        db = sqlite3.connect("instance/parking.db")
+        cr = db.cursor()
+        cr.execute("SELECT id, libre FROM places")
+        res = cr.fetchall()
+        db.close()
+        return res

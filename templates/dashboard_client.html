@@ -1,324 +1,443 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Client - SmartPark</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <style>
-    .dashboard-page {
-      min-height: 100vh;
-      background: var(--parking-light);
-      padding-top: 5rem;
-      padding-bottom: 2rem;
-    }
+{% extends "base.html" %}
 
-    .dashboard-header {
-      margin-bottom: 2rem;
-    }
+{% block title %}Mon Espace Client - SmartPark{% endblock %}
 
-    .dashboard-title {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: var(--parking-gray);
-      margin-bottom: 0.5rem;
-    }
+{% block extra_css %}
+<style>
+  :root {
+    --parking-bg: #e9ecef;
+    --spot-free-bg: #f0fff4;
+    --spot-free-border: #9ae6b4;
+    --spot-free-text: #2f855a;
+    --spot-occupied-bg: #fff5f5;
+    --spot-occupied-border: #feb2b2;
+    --spot-occupied-text: #c53030;
+    --lane-bg: #f8f9fa;
+  }
 
-    .dashboard-subtitle {
-      color: var(--gray-600);
-    }
+  .dashboard-page {
+    min-height: 100vh;
+    background: #f4f7f6;
+    padding-top: 5rem;
+    padding-bottom: 2rem;
+  }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
+  .parking-container {
+    background: var(--parking-bg);
+    border-radius: 2rem;
+    padding: 3rem;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    margin-top: 2rem;
+  }
 
-    @media (min-width: 640px) {
-      .stats-grid {
-        gap: 1.5rem;
-      }
-    }
+  .parking-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 
-    .stat-card-small {
-      background: white;
-      border-radius: var(--radius-lg);
-      padding: 1rem;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
+  .parking-spot {
+    flex: 1;
+    min-width: 80px;
+    max-width: 100px;
+    aspect-ratio: 0.7;
+    border-radius: 0.5rem;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 5px;
+    transition: all 0.2s;
+    text-decoration: none;
+    position: relative;
+    background: white;
+  }
 
-    .stat-icon-small {
-      width: 2.5rem;
-      height: 2.5rem;
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+  .spot-number {
+    font-size: 0.7rem;
+    color: #a0aec0;
+    font-weight: 600;
+  }
 
-    .stat-icon-small.gray {
-      background: var(--gray-100);
-      color: var(--gray-600);
-    }
+  .spot-icon {
+    width: 32px;
+    height: 32px;
+  }
 
-    .stat-icon-small.green {
-      background: var(--green-100);
-      color: var(--green-600);
-    }
+  .spot-info {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    word-break: break-all;
+    line-height: 1.2;
+  }
 
-    .stat-icon-small.red {
-      background: var(--red-100);
-      color: var(--red-600);
-    }
+  /* Free Spot */
+  .parking-spot.free {
+    background: var(--spot-free-bg);
+    border-color: var(--spot-free-border);
+    color: var(--spot-free-text);
+    cursor: pointer;
+  }
+  .parking-spot.free:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(56, 161, 105, 0.2);
+    background: #c6f6d5;
+  }
 
-    .stat-label-small {
-      font-size: 0.75rem;
-      color: var(--gray-500);
-    }
+  /* Occupied Spot */
+  .parking-spot.occupied {
+    background: var(--spot-occupied-bg);
+    border-color: var(--spot-occupied-border);
+    color: var(--spot-occupied-text);
+    cursor: not-allowed;
+  }
 
-    .stat-value-small {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
+  /* Circulation Lane */
+  .circulation-lane {
+    height: 120px;
+    background: var(--lane-bg);
+    margin: 30px 0;
+    border-radius: 1rem;
+    border: 2px dashed #cbd5e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    position: relative;
+  }
 
-    .parking-legend {
-      display: flex;
-      gap: 1.5rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-    }
+  .lane-text {
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #718096;
+    font-size: 1rem;
+  }
 
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--gray-600);
-    }
+  .lane-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
 
-    .legend-box {
-      width: 1rem;
-      height: 1rem;
-      border-radius: var(--radius-sm);
-      border: 2px solid;
-    }
+  .arrow-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+  }
 
-    .legend-box.free {
-      background: var(--green-100);
-      border-color: #9AE6B4;
-    }
+  .arrow-circle.entry { background: #38a169; }
+  .arrow-circle.exit { background: #e53e3e; }
 
-    .legend-box.occupied {
-      background: var(--red-100);
-      border-color: #FC8181;
-    }
+  .arrow-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #4a5568;
+    text-transform: uppercase;
+  }
 
-    .history-table {
-      width: 100%;
-    }
+  .status-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 5px solid var(--parking-blue);
+  }
+</style>
+{% endblock %}
 
-    .history-table th,
-    .history-table td {
-      padding: 0.875rem 1rem;
-      text-align: left;
-    }
-
-    .history-table th {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--gray-500);
-      border-bottom: 1px solid var(--gray-200);
-    }
-
-    .history-table td {
-      font-size: 0.875rem;
-      border-bottom: 1px solid var(--gray-100);
-    }
-
-    .history-table tbody tr:hover {
-      background: var(--gray-50);
-    }
-  </style>
-  <base target="_blank">
-</head>
-<body class="page-client">
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="container navbar-inner">
-      <a href="/" class="logo">
-        <div class="logo-icon">
-          <i data-lucide="car" style="width: 24px; height: 24px;"></i>
-        </div>
-        <span class="logo-text">SmartPark</span>
-      </a>
-
-      <div class="nav-links">
-        <a href="/client" class="nav-link">Dashboard</a>
-        <div class="user-menu">
-          <div class="user-avatar">
-            <i data-lucide="user" style="width: 16px; height: 16px; color: white;"></i>
-          </div>
-          <span class="user-role">Client</span>
-        </div>
-        <button class="btn btn-outline btn-sm" id="logoutBtn">
-          <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
-          Déconnexion
-        </button>
-      </div>
-
-      <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
-      </button>
-    </div>
-
-    <div class="mobile-menu" id="mobileMenu">
-      <a href="/client">Dashboard</a>
-      <button id="logoutBtnMobile" style="color: var(--parking-red); width: 100%; text-align: left; background: none; border: none; padding: 0.75rem; font-size: 1rem;">
-        Déconnexion
-      </button>
-    </div>
-  </nav>
-
-  <!-- Dashboard Content -->
-  <main class="dashboard-page">
-    <div class="container">
-      <!-- Header -->
-      <div class="dashboard-header animate-fade-in">
-        <h1 class="dashboard-title">Mon Espace Client</h1>
-        <p class="dashboard-subtitle">Réservez votre place de parking en quelques clics</p>
-      </div>
-
-      <!-- Stats -->
-      <div class="stats-grid animate-fade-in-up delay-100">
-        <div class="stat-card-small">
-          <div class="stat-icon-small gray">
-            <i data-lucide="car" style="width: 20px; height: 20px;"></i>
-          </div>
-          <div>
-            <p class="stat-label-small">Total</p>
-            <p class="stat-value-small text-parking-gray">10</p>
-          </div>
-        </div>
-        <div class="stat-card-small">
-          <div class="stat-icon-small green">
-            <i data-lucide="check-circle" style="width: 20px; height: 20px;"></i>
-          </div>
-          <div>
-            <p class="stat-label-small">Libres</p>
-            <p class="stat-value-small text-green-600" id="freeSpots">6</p>
-          </div>
-        </div>
-        <div class="stat-card-small">
-          <div class="stat-icon-small red">
-            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
-          </div>
-          <div>
-            <p class="stat-label-small">Occupées</p>
-            <p class="stat-value-small text-red-600" id="occupiedSpots">4</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Parking Grid -->
-      <div class="card mb-8 animate-fade-in-up delay-200">
-        <div class="card-header">
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            <i data-lucide="map-pin" class="text-green-600" style="width: 20px; height: 20px;"></i>
-            Plan du parking
+{% block content %}
+<main class="dashboard-page">
+  <div class="container">
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+      <!-- Status Card -->
+      <div class="md:col-span-2">
+        <div class="status-card">
+          <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="info" class="text-blue-500"></i>
+            Mon véhicule actuel
           </h2>
-          <p class="text-sm text-gray-500 mt-1">Cliquez sur une place verte pour réserver</p>
-        </div>
-        <div class="card-body">
-          <div class="parking-grid" id="parkingGrid">
-            <!-- Parking spots will be rendered by JS -->
-          </div>
+          {% if current_ticket %}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p class="text-gray-500 text-sm">Place actuelle</p>
+                <p class="text-lg font-bold">#{{ current_ticket[1] }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 text-sm">Matricule</p>
+                <p class="text-lg font-bold">{{ current_ticket[4] }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 text-sm">Durée</p>
+                <p class="text-lg font-bold">{{ duration }}</p>
+              </div>
+              <div>
+                <p class="text-gray-500 text-sm">Statut sortie</p>
+                {% if current_ticket[3] == 0 %}
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">⏳ En attente d'autorisation</span>
+                {% else %}
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">✅ Autorisée</span>
+                {% endif %}
+              </div>
+            </div>
 
-          <div class="parking-legend">
-            <div class="legend-item">
-              <div class="legend-box free"></div>
-              <span>Libre</span>
+            <div class="mt-6 flex gap-4">
+              {% if current_ticket[3] == 0 %}
+                <button disabled class="btn btn-secondary flex-1 opacity-50 cursor-not-allowed">
+                  ⏳ En attente d'autorisation du gardien
+                </button>
+              {% else %}
+                <form action="/cloturer_ticket" method="POST" class="flex-1">
+                  <input type="hidden" name="ticket_id" value="{{ current_ticket[0] }}">
+                  <button type="submit" class="btn btn-primary w-full">
+                    <i data-lucide="receipt" class="mr-2"></i> Voir mon ticket et Payer
+                  </button>
+                </form>
+              {% endif %}
             </div>
-            <div class="legend-item">
-              <div class="legend-box occupied"></div>
-              <span>Occupée</span>
+          {% else %}
+            <div class="text-center py-4">
+              <p class="text-gray-500">Vous n'avez aucun véhicule stationné actuellement.</p>
+              <p class="text-sm text-gray-400 mt-1">Sélectionnez une place libre sur le plan pour stationner.</p>
             </div>
-          </div>
+          {% endif %}
         </div>
       </div>
 
-      <!-- History -->
-      <div class="card animate-fade-in-up delay-300">
-        <div class="card-header">
-          <h2 class="text-lg font-semibold flex items-center gap-2">
-            <i data-lucide="clock" class="text-blue-600" style="width: 20px; height: 20px;"></i>
-            Historique des sessions
-          </h2>
-        </div>
-        <div class="card-body">
-          <div class="table-wrapper">
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Durée</th>
-                  <th class="text-right">Montant</th>
-                </tr>
-              </thead>
-              <tbody id="historyTable">
-                <!-- History will be rendered by JS -->
-              </tbody>
-            </table>
+      <!-- History Mini Chart -->
+      <div class="md:col-span-1">
+        <div class="card h-full">
+          <div class="card-header">
+            <h3 class="font-bold text-sm">Historique personnel</h3>
+          </div>
+          <div class="card-body">
+            <canvas id="personalHistoryChart" height="150"></canvas>
           </div>
         </div>
       </div>
     </div>
-  </main>
 
-  <!-- Reservation Modal -->
-  <div class="modal-overlay" id="reservationModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 class="text-lg font-semibold flex items-center gap-2" id="reservationModalTitle">
-          <i data-lucide="car" class="text-green-600" style="width: 20px; height: 20px;"></i>
-          Réserver une place
-        </h3>
+    <div class="flex justify-between items-end mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Plan du Parking</h1>
+        <p class="text-gray-500">Choisissez une place libre (verte) pour vous garer.</p>
       </div>
-      <div class="modal-body">
-        <div class="space-y-4">
-          <div class="form-group">
-            <label class="form-label" for="matricule">Matricule</label>
-            <input type="text" id="matricule" class="form-input" placeholder="AB-123-CD">
-            <div class="field-error" id="matriculeError">
-              <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
-              <span>Matricule requis</span>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="marque">Marque</label>
-            <input type="text" id="marque" class="form-input" placeholder="Renault">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="couleur">Couleur</label>
-            <input type="text" id="couleur" class="form-input" placeholder="Bleu">
-          </div>
+      <div class="flex gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded" style="background: #9ae6b4;"></div>
+          <span class="text-xs font-bold">LIBRE</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded" style="background: #feb2b2;"></div>
+          <span class="text-xs font-bold">OCCUPÉ</span>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" id="cancelReservation">Annuler</button>
-        <button class="btn btn-primary" id="confirmReservation">Confirmer</button>
+    </div>
+
+    <div class="parking-container">
+      <!-- Row 1 -->
+      <div class="parking-row">
+        {% for spot in row1 %}
+          {% if spot[1] == 1 %}
+            <button class="parking-spot free" data-spot-id="{{ spot[0] }}" {% if current_ticket %}disabled style="cursor:not-allowed; opacity:0.7;"{% endif %}>
+              <span class="spot-number">#{{ spot[0] }}</span>
+              <div class="spot-icon">
+                <i data-lucide="parking-circle" style="width: 32px; height: 32px; color: #9ae6b4;"></i>
+              </div>
+              <span class="spot-info">LIBRE</span>
+            </button>
+          {% else %}
+            <div class="parking-spot occupied">
+              <span class="spot-number">#{{ spot[0] }}</span>
+              <div class="spot-icon">
+                <i data-lucide="car" style="width: 32px; height: 32px; color: #e53e3e;"></i>
+              </div>
+              <span class="spot-info">{{ spot[2] if spot[2] else 'OCCUPÉ' }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <!-- Circulation Lane -->
+      <div class="circulation-lane">
+        <div class="lane-arrow">
+          <div class="arrow-circle entry">
+            <i data-lucide="arrow-right" style="width: 24px; height: 24px;"></i>
+          </div>
+          <span class="arrow-label">Entrée</span>
+        </div>
+        <div class="lane-text">ALLÉE DE CIRCULATION</div>
+        <div class="lane-arrow">
+          <div class="arrow-circle exit">
+            <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+          </div>
+          <span class="arrow-label">Sortie</span>
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="parking-row">
+        {% for spot in row2 %}
+          {% if spot[1] == 1 %}
+            <button class="parking-spot free" data-spot-id="{{ spot[0] }}" {% if current_ticket %}disabled style="cursor:not-allowed; opacity:0.7;"{% endif %}>
+              <span class="spot-number">#{{ spot[0] }}</span>
+              <div class="spot-icon">
+                <i data-lucide="parking-circle" style="width: 32px; height: 32px; color: #9ae6b4;"></i>
+              </div>
+              <span class="spot-info">LIBRE</span>
+            </button>
+          {% else %}
+            <div class="parking-spot occupied">
+              <span class="spot-number">#{{ spot[0] }}</span>
+              <div class="spot-icon">
+                <i data-lucide="car" style="width: 32px; height: 32px; color: #e53e3e;"></i>
+              </div>
+              <span class="spot-info">{{ spot[2] if spot[2] else 'OCCUPÉ' }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
       </div>
     </div>
   </div>
+</main>
 
-  <script src="/static/js/script.js"></script>
-</body>
-</html>
+<!-- Reservation Modal -->
+<div class="modal-overlay" id="reservationModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="text-lg font-semibold flex items-center gap-2" id="reservationModalTitle">
+        <i data-lucide="car" class="text-green-600" style="width: 20px; height: 20px;"></i>
+        Réserver une place
+      </h3>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div class="form-group">
+          <label class="form-label" for="matricule">Matricule du véhicule</label>
+          <input type="text" id="matricule" class="form-input" placeholder="Ex: 12345|A|32">
+          <div class="field-error" id="matriculeError" style="display:none; color:red; font-size:0.8rem;">
+            <span>Matricule requis</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="marque">Marque / Modèle</label>
+          <input type="text" id="marque" class="form-input" placeholder="Ex: Dacia Logan">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="couleur">Couleur</label>
+          <input type="text" id="couleur" class="form-input" placeholder="Ex: Blanc">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="cancelReservation">Annuler</button>
+      <button class="btn btn-primary" id="confirmReservation">Confirmer la réservation</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Modal Logic
+    const modal = document.getElementById('reservationModal');
+    const cancelBtn = document.getElementById('cancelReservation');
+    const confirmBtn = document.getElementById('confirmReservation');
+    const spots = document.querySelectorAll('.parking-spot.free');
+
+    spots.forEach(spot => {
+      spot.addEventListener('click', () => {
+        if (spot.hasAttribute('disabled')) return;
+        const spotId = spot.dataset.spotId;
+        document.getElementById('reservationModalTitle').innerText = `Réserver la Place #${spotId}`;
+        confirmBtn.dataset.spotId = spotId;
+        modal.classList.add('active');
+      });
+    });
+
+    cancelBtn?.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+
+    confirmBtn?.addEventListener('click', () => {
+      const spotId = confirmBtn.dataset.spotId;
+      const matricule = document.getElementById('matricule').value;
+      const marque = document.getElementById('marque').value;
+      const couleur = document.getElementById('couleur').value;
+
+      if (!matricule) {
+        document.getElementById('matriculeError').style.display = 'block';
+        return;
+      }
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/choisir_place';
+
+      const fields = {
+        'place_id': spotId,
+        'matricule': matricule,
+        'marque': marque,
+        'couleur': couleur
+      };
+
+      for (const [name, value] of Object.entries(fields)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+    });
+
+    // History Chart
+    const ctx = document.getElementById('personalHistoryChart')?.getContext('2d');
+    if (ctx) {
+        const historyData = [
+            {% for h in history|reverse %}
+                {
+                    date: "{{ h[1][:10] }}",
+                    montant: {{ h[2] }}
+                },
+            {% endfor %}
+        ];
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: historyData.map(d => d.date),
+                datasets: [{
+                    label: 'Dépenses (MAD)',
+                    data: historyData.map(d => d.montant),
+                    borderColor: '#38a169',
+                    backgroundColor: 'rgba(56, 161, 105, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true },
+                    x: { ticks: { display: false } }
+                }
+            }
+        });
+    }
+  });
+</script>
+{% endblock %}

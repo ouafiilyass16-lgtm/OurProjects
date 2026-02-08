@@ -5,6 +5,7 @@ from datetime import datetime
 DB_PATH = "instance/parking.db"
 os.makedirs("instance", exist_ok=True)
 
+
 def init_db():
     db = sqlite3.connect(DB_PATH)
     cr = db.cursor()
@@ -17,8 +18,8 @@ def init_db():
         email TEXT UNIQUE,
         password TEXT,
         role TEXT,
-        admin_auth INTEGER DEFAULT 1,   -- admin par défaut
-        gardien_auth INTEGER DEFAULT 1  -- gardien par défaut
+        admin_auth INTEGER DEFAULT 1,
+        gardien_auth INTEGER DEFAULT 1
     )
     """)
     cr.execute(
@@ -56,11 +57,19 @@ def init_db():
         date_entree TEXT,
         date_sortie TEXT,
         montant REAL,
+        autorise INTEGER DEFAULT 0,  -- 0: non autorisé, 1: autorisé
         FOREIGN KEY(user_id) REFERENCES utilisateurs(id),
         FOREIGN KEY(vehicule_id) REFERENCES vehicules(id),
         FOREIGN KEY(place_id) REFERENCES places(id)
     )
     """)
+
+    # Vérifier si la colonne autorise existe déjà (migration si nécessaire)
+    try:
+        cr.execute("SELECT autorise FROM tickets LIMIT 1")
+    except sqlite3.OperationalError:
+        cr.execute("ALTER TABLE tickets ADD COLUMN autorise INTEGER DEFAULT 0")
+
     # Paiements
     cr.execute("""
     CREATE TABLE IF NOT EXISTS paiements (
@@ -83,12 +92,18 @@ def init_db():
     # Initialisation places et tarifs
     cr.execute("SELECT COUNT(*) FROM places")
     if cr.fetchone()[0] == 0:
-        for _ in range(10):  # 10 places initiales
+        for _ in range(24):
             cr.execute("INSERT INTO places(libre) VALUES (1)")
 
     cr.execute("SELECT COUNT(*) FROM tarifs")
     if cr.fetchone()[0] == 0:
-        cr.execute("INSERT INTO tarifs(prix_par_heure) VALUES (10)")
+        cr.execute("INSERT INTO tarifs(prix_par_heure) VALUES (3)")  # Nouveau tarif: 3 DH/h
+    else:
+        cr.execute("UPDATE tarifs SET prix_par_heure = 3")
 
     db.commit()
     db.close()
+
+
+if __name__ == "__main__":
+    init_db()
